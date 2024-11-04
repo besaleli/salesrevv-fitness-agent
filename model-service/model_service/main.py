@@ -20,7 +20,7 @@ async def health():
     """Health."""
     return "OK"
 
-@app.get("/predict")
+@app.post("/predict")
 async def predict(request: PredictRequest):
     """Predict."""
     return PredictResponse(

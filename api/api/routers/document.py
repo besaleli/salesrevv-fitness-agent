@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fastapi import APIRouter
 from ..models.document import Document
 from ..db import SessionLocal
-from ..embedding import embedding
+from ..ml.embedding import embedding
 
 router = APIRouter()
 

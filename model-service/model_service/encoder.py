@@ -2,8 +2,9 @@
 from typing import List, Annotated
 from pydantic import BaseModel, ConfigDict, PrivateAttr
 import torch
+import torch.nn.functional as F
 from transformers import AutoModel, AutoTokenizer, PreTrainedTokenizer, PreTrainedModel
-from .env_settings import MODEL_NAME
+from .env_settings import MODEL_NAME, MATRYOSHKA_DIM
 
 def mean_pooling(
     model_output: torch.Tensor,
@@ -16,6 +17,21 @@ def mean_pooling(
     den = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
     return num / den
+
+def norm(embeddings: torch.Tensor) -> torch.Tensor:
+    """Normalize embeddings.
+
+    Args:
+        embeddings (torch.Tensor): Embeddings to normalize.
+    
+    Returns:
+        torch.Tensor: Normalized embeddings.
+    """
+    embeddings = F.layer_norm(embeddings, normalized_shape=(embeddings.shape[1],))
+    if MATRYOSHKA_DIM is not None:
+        embeddings = embeddings[:, :MATRYOSHKA_DIM]
+
+    return embeddings
 
 def get_hf_model() -> PreTrainedModel:
     """Get huggingface model."""
@@ -44,10 +60,7 @@ class Encoder(BaseModel):
         with torch.no_grad():
             op = self._model(**inputs)
 
-        return (
-            mean_pooling(op, inputs["attention_mask"])
-            .detach()
-            .cpu()
-            .numpy()
-            .tolist()
-        )
+        pooled = mean_pooling(op, inputs["attention_mask"])
+        normalized = norm(pooled)
+
+        return normalized.detach().cpu().numpy().tolist()

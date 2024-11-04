@@ -1,15 +1,32 @@
 """API."""
+import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from .db import Base, engine, DATABASE_URL
+from sqlalchemy import text
+from .db import Base, engine
 from .routers.document import router as document_router
 
-print(DATABASE_URL)
-Base.metadata.create_all(bind=engine)
+logger = logging.getLogger(__name__)
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app_: FastAPI):
+    """Lifespan function."""
+    logger.error("Starting up %s...", app_.title)
+    logger.error("Creating vector extension...")
+    with engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        conn.commit()
+
+    logger.error("Creating metadata...")
+    Base.metadata.create_all(bind=engine)
+    yield
+
+    logger.info("Shutting down %s...", app_.title)
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(document_router, prefix="/document", tags=["document"])
 
 @app.get("/")
-def index():
+async def index():
     """Index page."""
     return "API is up and running <3"

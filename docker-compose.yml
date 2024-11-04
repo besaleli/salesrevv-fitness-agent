@@ -1,0 +1,50 @@
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - 3050:3050
+    restart: always
+    networks:
+      - default
+    volumes:
+      - ./api:/app
+    depends_on:
+      - model_service
+      - postgres
+  model_service:
+    build:
+      context: ./model-service
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - 8070:8070
+    restart: always
+    networks:
+      - default
+    volumes:
+      - ./.hf_cache:/.hf_cache
+      - ./model-service:/app
+  postgres:
+    image: pgvector/pgvector:pg17
+    env_file:
+      - .env
+    ports:
+      - 5432:5432
+    networks:
+      - default
+    volumes:
+      - pgvector:/var/lib/postgresql/data
+    depends_on:
+      - model_service
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  pgvector:

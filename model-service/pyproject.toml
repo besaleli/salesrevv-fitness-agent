@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "model-service"
+version = "0.1.0"
+description = ""
+authors = ["Raz Besaleli <rbesaleli@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+uvicorn = "^0.32.0"
+fastapi = {extras = ["standard"], version = "^0.115.4"}
+torch = "^2.5.1"
+transformers = "^4.46.1"
+pydantic = "^2.9.2"
+einops = "^0.8.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

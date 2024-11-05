@@ -1,7 +1,4 @@
 """Services."""
-from typing import List
-from .message import Message
+from .pipeline import Pipeline
 
-async def pipeline(messages: List[Message]) -> Message:
-    """Pipeline."""
-    return messages[0]
+pipeline = Pipeline()

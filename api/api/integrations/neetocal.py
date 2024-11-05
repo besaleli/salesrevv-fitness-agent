@@ -64,6 +64,34 @@ class NeetoCalHandler(BaseModel):
     _session: aiohttp.ClientSession = PrivateAttr(default_factory=construct_session)
     meeting_slug: str = NEETOCAL_MEETING_SLUG
 
+    async def create_booking(
+        self,
+        name: str,
+        email: str,
+        slot_date: str,
+        slot_start_time: str,
+        timezone: str = 'America/New_York',
+    ) -> str:
+        """Create booking."""
+        data = {
+            "meeting_slug": self.meeting_slug,
+            "name": name,
+            "email": email,
+            "slot_date": slot_date,
+            "slot_start_time": slot_start_time,
+            "time_zone": timezone,
+        }
+
+        async with self._session.post(
+            "/api/external/v1/bookings",
+            json=data
+            ) as response:
+            try:
+                response.raise_for_status()
+                return await response.json()
+            except Exception as e:
+                return f"Failed to create booking: {e}"
+
     async def available_slots(
         self,
         month: int,

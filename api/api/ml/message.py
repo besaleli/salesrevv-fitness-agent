@@ -94,4 +94,6 @@ class ChatHistory(RootModel[List[Message]]):
                 .model_dump()
                 )
 
+        print(messages)
+
         return messages

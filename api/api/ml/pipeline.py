@@ -1,11 +1,12 @@
 """Pipeline."""
 from typing import List
+from datetime import datetime
 import json
 from functools import cached_property
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 from .message import Message, ChatHistory, Role
-from .tools import TOOL_CALL_MAP
+from .tools import TOOL_CALL_MAP, LIST_AVAILABLE_SLOTS, BOOK_APPOINTMENT
 from ..env_settings import OPENAI_API_KEY
 
 class Pipeline(BaseModel):
@@ -27,12 +28,17 @@ class Pipeline(BaseModel):
             .chat
             .completions
             .create(
-                messages=messages.render(system_prompt_id='tool_call_system'),
+                messages=messages.render(
+                    system_prompt_id='tool_call_system',
+                    system_kwargs={
+                        'date_time': datetime.now().strftime('%A, %Y-%m-%d %H:%M')
+                    }
+                    ),
                 model='gpt-4o',
                 temperature=0,
                 top_p=1,
                 max_tokens=512,
-                tools=[...]
+                tools=[LIST_AVAILABLE_SLOTS, BOOK_APPOINTMENT],
             )
         )
 
@@ -46,7 +52,7 @@ class Pipeline(BaseModel):
                 data.append(
                     (
                         fn_name,
-                        TOOL_CALL_MAP[fn_name](**arguments)
+                        await TOOL_CALL_MAP[fn_name](**arguments)
                         )
                     )
             msg = '\n'.join(f"{fn_name}: {result}" for fn_name, result in data)
@@ -72,7 +78,12 @@ class Pipeline(BaseModel):
             .chat
             .completions
             .create(
-                messages=messages.render(system_prompt_id='summarization_system'),
+                messages=messages.render(
+                    system_prompt_id='summarization_system',
+                    system_kwargs={
+                        'date_time': datetime.now().strftime('%A, %Y-%m-%d %H:%M')
+                    }
+                    ),
                 model='gpt-4o',
                 temperature=0,
                 top_p=1,

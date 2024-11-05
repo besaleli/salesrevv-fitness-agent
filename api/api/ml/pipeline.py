@@ -6,7 +6,12 @@ from functools import cached_property
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 from .message import Message, ChatHistory, Role
-from .tools import TOOL_CALL_MAP, LIST_AVAILABLE_SLOTS, BOOK_APPOINTMENT
+from .tools import (
+    TOOL_CALL_MAP,
+    LIST_AVAILABLE_SLOTS,
+    BOOK_APPOINTMENT,
+    SEARCH_FITNESS_INFORMATION
+    )
 from ..env_settings import OPENAI_API_KEY
 
 class Pipeline(BaseModel):
@@ -19,6 +24,14 @@ class Pipeline(BaseModel):
             timeout=30,
             max_retries=2,
         )
+    
+    @cached_property
+    def client_info(self) -> dict:
+        """Client info."""
+        return {
+            'client_name': 'Jane Doe',
+            'client_email': 'jane.doe@gmail.com'
+        }
 
     async def tool_call(self, messages: ChatHistory) -> ChatHistory:
         """Call method for tool call."""
@@ -31,14 +44,15 @@ class Pipeline(BaseModel):
                 messages=messages.render(
                     system_prompt_id='tool_call_system',
                     system_kwargs={
-                        'date_time': datetime.now().strftime('%A, %Y-%m-%d %H:%M')
+                        'date_time': datetime.now().strftime('%A, %Y-%m-%d %H:%M'),
+                        **self.client_info
                     }
                     ),
                 model='gpt-4o',
                 temperature=0,
                 top_p=1,
                 max_tokens=512,
-                tools=[LIST_AVAILABLE_SLOTS, BOOK_APPOINTMENT],
+                tools=[LIST_AVAILABLE_SLOTS, BOOK_APPOINTMENT, SEARCH_FITNESS_INFORMATION],
             )
         )
 
@@ -81,7 +95,8 @@ class Pipeline(BaseModel):
                 messages=messages.render(
                     system_prompt_id='summarization_system',
                     system_kwargs={
-                        'date_time': datetime.now().strftime('%A, %Y-%m-%d %H:%M')
+                        'date_time': datetime.now().strftime('%A, %Y-%m-%d %H:%M'),
+                        **self.client_info
                     }
                     ),
                 model='gpt-4o',

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from sqlalchemy import text
 from .db import Base, engine
 from .routers.document import router as document_router
+from .routers.message import router as message_router
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ async def lifespan(app_: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(document_router, prefix="/document", tags=["document"])
+app.include_router(message_router, prefix="/message", tags=["message"])
 
 @app.get("/")
 async def index():
